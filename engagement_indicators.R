@@ -5,6 +5,7 @@ library(ggplot2)
 library(data.table)
 library(lubridate)
 library(ggthemes)
+library(tidyverse)
 
 tweets <- read.csv('data/tweets.csv')
 user.info <- read.csv('data/user_info.csv')
@@ -194,3 +195,13 @@ ggplot(df,
 
 
 #----------------------------------------------------------
+
+df <- structure(list(idnum = c(17L, 17L, 17L), start = structure(c(8401, 
+                                                                   8401, 8401), class = "Date"), end = structure(c(8765, 8765, 8765
+                                                                   ), class = "Date")), class = "data.frame", .Names = c("idnum", 
+                                                                                                                         "start", "end"), row.names = c(NA, -3L))
+
+df %>%
+  nest(start, end) %>%
+  mutate(df = map(df, ~seq(unique(.x$start), unique(.x$end), 1))) %>%
+  unnest(df)
