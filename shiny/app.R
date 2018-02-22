@@ -6,8 +6,8 @@ library(ggthemes)
 library(data.table)
 
 hashtags <- read.csv('hashtags.csv')
-tweets <- read.csv('tweets.csv')
-users <- read.csv('users_info.csv')
+tweets <- read.csv('tweet_content.csv')
+users <- read.csv('tweet_users.csv')
 
 ui <- fluidPage(
   headerPanel('NOAA Social Media Engagement'),
@@ -99,7 +99,7 @@ server <- function(input, output) {
   })
     
   user.followers <- reactive({  
-    tbl_df(user.info) %>%
+    tbl_df(users) %>%
       filter(screen_name %in% input$account) %>%
       filter(as.Date(updated) >= input$daterange[1] & as.Date(updated)<=input$daterange[2]) %>%
       group_by(screen_name,updated) %>%

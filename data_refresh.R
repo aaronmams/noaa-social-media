@@ -69,15 +69,15 @@ tl <- rbind(tl,get_timeline('@NOAAFish_WCRO',n=200))
 tl <- rbind(tl,get_timeline('@NOAA',n=200))
 tl <- rbind(tl,get_timeline('@NOAAResearch',n=200))
 
-tl <- rbind(tl,get_timeline('@NOAANCEIclimate',n=1000))
-tl <- rbind(tl,get_timeline('@NOAAClimate',n=1000))
-tl <- rbind(tl,get_timeline('@MBNMS',n=1000))
-tl <- rbind(tl,get_timeline('@Eileen_NOAAFish',n=1000))
-tl <- rbind(tl,get_timeline('@NOAAFisheriesAK',n=1000))
-tl <- rbind(tl,get_timeline('@NOAAFish_PIRO',n=1000))
-tl <- rbind(tl,get_timeline('@NOAAFish_PIFSC',n=1000))
-tl <- rbind(tl,get_timeline('@NOAAFish_SERO',n=1000))
-tl <- rbind(tl,get_timeline('@CenterforBioDiv',n=1000))
+tl <- rbind(tl,get_timeline('@NOAANCEIclimate',n=200))
+tl <- rbind(tl,get_timeline('@NOAAClimate',n=200))
+tl <- rbind(tl,get_timeline('@MBNMS',n=200))
+tl <- rbind(tl,get_timeline('@Eileen_NOAAFish',n=200))
+tl <- rbind(tl,get_timeline('@NOAAFisheriesAK',n=200))
+tl <- rbind(tl,get_timeline('@NOAAFish_PIRO',n=200))
+tl <- rbind(tl,get_timeline('@NOAAFish_PIFSC',n=200))
+tl <- rbind(tl,get_timeline('@NOAAFish_SERO',n=200))
+tl <- rbind(tl,get_timeline('@CenterforBioDiv',n=200))
 
 
 tl <- tl %>% select(created_at,user_id,screen_name,text,
@@ -207,9 +207,17 @@ new.user.info <- new.user.info %>% mutate(updated=as.POSIXct(Sys.time()))
 content <- rbind(content,tl,df)
 users.info <- rbind(users.info,new.user.info) 
 
+#get ride of any duplicates
+content <- content %>% group_by(user_id,screen_name,created_at,text) %>%
+           filter(row_number()==1)
+
+users.info <- users.info %>%
+              group_by(user_id,screen_name,updated) %>%
+              filter(row_number()==1)
+
 #save these as back up .csv file
 write.csv(content,'data/tweet_content.csv')
-write.csv(user.info,'data/tweet_users.csv')
+write.csv(users.info,'data/tweet_users.csv')
 
 #Final Step: push these data frames to the databases
 
