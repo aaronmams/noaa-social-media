@@ -7,6 +7,7 @@ library(data.table)
 
 hashtags <- read.csv('hashtags.csv')
 tweets <- read.csv('tweets.csv')
+users <- read.csv('users_info.csv')
 
 ui <- fluidPage(
   headerPanel('NOAA Social Media Engagement'),
@@ -21,14 +22,16 @@ ui <- fluidPage(
   ),
   mainPanel(
     tabsetPanel(
-      tabPanel("Engagement",
+      tabPanel("Top Hashtags",
                
                plotOutput('plot1',width="100%"),
                plotOutput('plot2',width="100%")
       ),
-      tabPanel("Table",
-               tableOutput('table1')
-      )
+      tabPanel("Top Users",
+               plotOutput('plot3'),
+               plotOutput('plot4')
+      ),
+      tabPanel("Top Tweets",tableOutput('table1'))
     )    
   )
 )
@@ -94,7 +97,17 @@ server <- function(input, output) {
         arrange(rank)
     
   })
-          
+    
+  user.followers <- reactive({  
+    tbl_df(user.info) %>%
+      filter(screen_name %in% input$account) %>%
+      filter(as.Date(updated) >= input$daterange[1] & as.Date(updated)<=input$daterange[2]) %>%
+      group_by(screen_name,updated) %>%
+      filter(row_number()==1) %>%
+      ungroup()
+  })
+  
+
   output$plot1 <- renderPlot({
     
     ggplot(hash() %>% 
@@ -113,14 +126,37 @@ server <- function(input, output) {
     
     ggplot(rolling(),
              aes(x=created,y=retweets,color=hashtag,shape=hashtag)) + geom_line() + geom_point() + 
-      theme_wsj() + ggtitle('Retweets')
+      theme_wsj() +  theme(legend.text=element_text(size=12)) + ggtitle('Retweets')
     
     
   })
   
+  output$plot3 <- renderPlot({
+    ggplot(rt() %>% 
+      group_by(screen_name) %>%
+      summarise(rt_count=sum(retweet_count,na.rm=T)) %>%
+      arrange(-rt_count),aes(x=screen_name,y=rt_count)) + geom_bar(stat='identity') +
+      theme_wsj() + ggtitle('Total Retweets')
+    
+  })
   
+  output$plot4 <-     renderPlot({ggplot(user.followers(),
+                  aes(x=as.Date(updated),y=followers_count)) + geom_line() + geom_point() + 
+      facet_wrap(~screen_name,scales='free') + 
+      theme_wsj() +  theme(legend.text=element_text(size=12)) + ggtitle('Followers')
+  })
   
-  output$table1 <- renderTable(rolling())
+  output$table1 <- renderTable(  rt() %>%
+                                   filter(is_retweet==FALSE) %>%
+                                   filter(is.na(hashtags)==FALSE) %>%
+                                   group_by(screen_name,created_at,text,hashtags,mentions) %>%
+                                   summarise(RTs=sum(retweet_count,na.rm=T)) %>%
+                                   arrange(-RTs) %>%
+                                   ungroup() %>%
+                                   filter(row_number() <= 20)  %>%
+                                   select(screen_name,created_at,RTs,text) 
+  )
+  
 }
 
 shinyApp(ui = ui, server = server)
