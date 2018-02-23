@@ -539,6 +539,15 @@ shinyApp(ui = ui, server = server)
 
 It's also worth looking [at this article](http://docs.rstudio.com/shinyapps.io/getting-started.html#deploying-applications).
 
+For me, setting up the *rsconnect* package was pretty simple.  I just:
+
+* went to https://www.shinyapps.io/ and logged in
+* found my dashboard
+* used the options in the profile icon to generate a token
+* copied the generated code into my R Session and ran it.
+
+
+
 ```{r,eval=FALSE}
 rsconnect::setAccountInfo(name='aaronmams',
 			  token='',
