@@ -535,3 +535,12 @@ shinyApp(ui = ui, server = server)
 
 ### Publish the App
 
+[This article](https://shiny.rstudio.com/articles/shinyapps.html) has some pretty fool proof instruction for using the *rsconnect* package to deploy your Shiny app on the web.
+
+It's also worth looking [at this article](http://docs.rstudio.com/shinyapps.io/getting-started.html#deploying-applications).
+
+```{r,eval=FALSE}
+rsconnect::setAccountInfo(name='aaronmams',
+			  token='',
+			  secret='<SECRET>')
+```
