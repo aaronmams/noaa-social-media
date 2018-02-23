@@ -337,10 +337,22 @@ Writing these data frames to the local Shiny directory is again totally option. 
 
 Here is what I have:
 
-Here is what I want:
+* A data frame with tweets posted by or mentioning a variety of NOAA Fisheries Twitter accounts
+* A data frame with user profile information for each account
+
+Here is what I want my Shiny App to do:
+
+* allow the user to pick a date range
+* allow the user to pick a subset of the available accounts
+* display some visual summaries of Twitter engagement for the accounts during the chosen time window 
 
 ### The Shiny App
 
+One of the coolest things about Shiny is that the start up cost is pretty low.  It doesn't take much at all to get a simple app up and running.  A great resource for starter code is the [R Shiny Gallery](https://shiny.rstudio.com/gallery/).  Here's my app:
+
+```{r}
+
+```
 
 ### Publish the App
 
