@@ -142,3 +142,50 @@ For illustrative purposes look at the list of accounts from each data frame abov
 ```
 
 ### Step 1C: 
+
+## Step 2: Set up/Update/Refresh the database
+
+Ok, so this is a little out of order relative to how things are done in the R Project I posted on GitHub but I thought it might be wise to keep the RODBC stuff in a separate section from the Twitter stuff.  
+
+For this project there are two relatively simple tasks that leverage RODBC methods:
+
+1. Pull data from the existing database tables
+2. Push new data to those database tables
+
+The only quasi-difficult part of using R  to interact with a database in SQL Server is setting up the database connection.  I'm not going to walk through this because I don't really understand it well enough to give good advice.  If you're in a DIY mood you might check out:
+
+[Setting up a datasource on Windows](https://support.microsoft.com/en-us/help/965049/how-to-set-up-a-microsoft-sql-server-odbc-data-source)
+
+[If you are on a Mac, follow Eric Anderson's instructions here](http://eriqande.github.io/2014/12/19/setting-up-rodbc.html)
+
+Otherwise, get somebody who knows what they're doing to help you (shouldn't take them more than a few minutes)
+
+### Step 2A: Pull existing data from database tables
+
+Assuming you have a database connection, pulling the tables containing the social media data is pretty straightforward.  Using the RODBC package you:
+
+* tell R how to connect and with which database 
+* send an SQL query
+* close the connection
+
+In the sample below, I have a table called "tweets_content" living in the PacFIN_Econ database on the Pinniger server.  
+
+```{r}
+channel <- 
+tweets <- sqlQuery()
+close(channel)
+```
+
+### Step 2B: Update the tables
+
+The reason I pulled down the existing data in the step above is that the Twitter accounts that I'm tracking aren't super active.  This means that if I pull down say the 200 most recent tweets two weeks in a row for the same user I'm likely to generate a lot of duplicated data.  To avoid saving a bunch of duplicates to my database table I use the 4-step process of 
+
+1. get the existing data from the database
+2. pull the new Twitter activity
+3. join the new activity with the old stuff and remove duplicates
+4. save the joined dataframe in the database 
+
+
+```{r}
+
+```
