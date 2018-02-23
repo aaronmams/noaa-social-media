@@ -107,41 +107,89 @@ The data pull happens in two parts:
 1. use the get_timeline() method to get all the tweets sent from the various NOAA accounts
 2. use the search_tweets() to get tweets mentioning any of the NOAA accounts in the list above
 
-```{r}
+```{r,eval=FALSE}
 # get tweets from the NOAA accounts
-#tl <- get_timeline('@NOAAHabitat',n=10,retryonratelimit=TRUE)
+new.tweets <- get_timeline('@NOAAHabitat',n=10,retryonratelimit=TRUE)
 
-#tl <- tl %>% select(created_at,user_id,screen_name,text,
-#                    is_quote,is_retweet,favorite_count,
-#                    retweet_count,hashtags,mentions_screen_name) %>%
-#  mutate(update_time=Sys.time())
+new.tweets <- new.tweets %>% select(created_at,user_id,screen_name,text,
+                    is_quote,is_retweet,favorite_count,
+                    retweet_count,hashtags,mentions_screen_name) %>%
+  mutate(update_time=Sys.time())
 
-#str(tl)
-#print.data.frame(tl[1:3,])
+str(new.tweets)
+print.data.frame(new.tweets[1:3,])
 
 
 
-# get tweets mentioning any NOAA account
-#  rt <- search_tweets(
-#    '@NOAAHabitat', n = 10, include_rts = FALSE
-#  )
-#  rt <- rt %>% select(created_at,user_id,screen_name,text,
-#                      is_quote,is_retweet,favorite_count,
-#                      retweet_count,hashtags,mentions_screen_name) %>% 
-#    mutate(update_time=Sys.time())
+ get tweets mentioning any NOAA account
+  new.mentions <- search_tweets(
+    '@NOAAHabitat', n = 10, include_rts = FALSE
+  )
+  new.mentions <- new.mentions %>% select(created_at,user_id,screen_name,text,
+                      is_quote,is_retweet,favorite_count,
+                      retweet_count,hashtags,mentions_screen_name) %>% 
+    mutate(update_time=Sys.time())
   
-#str(rt)
-#print.data.frame(rt[1:3,])
+str(new.mentions)
+print.data.frame(new.mentions[1:3,])
+
+new.tweets <- rbind(new.tweets,new.mentions)
 ```
 
 For illustrative purposes look at the list of accounts from each data frame above:
 
-```{r}
-#unique(tl$screen_name)
-#unique(rt$screen_name)
+```{r,eval=FALSE}
+unique(new.tweets$screen_name)
+unique(new.mentions$screen_name)
 ```
 
-### Step 1C: 
+### Step 1C: Pull new user info
+
+The user info is mostly meta information that may not need to be refreshed as frequently as the actual twitter activity.  However, there is one piece of information in the user profiles that I am interested in tracking over time: followers.  So, for now, I've set up the script to refresh the user profile info each time I update the Twitter activity data.
+
+I get the user info using the *search_user()* function from the rtweet library.
+
+```{r,eval=FALSE}
+new.user.info <- lapply(users,function(x){
+  user.info <- search_users(x) %>% 
+    select(user_id,name,screen_name,location,description,followers_count,
+           friends_count)
+  return(user.info)
+})
+
+new.user.info <- data.frame(rbindlist(new.user.info))
+
+new.user.info <- new.user.info %>% mutate(updated=as.POSIXct(Sys.time()))
+
+```
+
+Note that the user profile data is just a snap-shot in time.  I'm kind of interesting in watching how followers for each account grow over time.  So the last step in the code chunk above is to create a date variable for the data frame.
+
+### Step 1D: Fix some stuff
+
+This last step is not necessarily pivotal to the project it just massages the data frames into a form I find a little easier to deal with.  In the "new.tweets" data frame above the field "hashtags" and "mentions" are actually lists within a data frame.  I don't really like this so I'm going to transform those columns into character strings where multiple hashtags or mentions for a observation are separated by a ";".
+
+```{r,eval=FALSE}
+#fix hashtags
+hash <- unlist(lapply(new.tweets$hashtags,function(x){paste(c(unlist(x)),collapse=";")}))
+
+new.tweets <- new.tweets %>% mutate(hash1=hash) %>%
+  select(-hashtags) %>%
+  mutate(hashtags=hash1) %>%
+  select(-hash1)
+
+#fix @ mentions
+mentions <- unlist(lapply(new.tweets$mentions_screen_name,function(x){paste(c(unlist(x)),collapse=";")}))
+new.tweets <- new.tweets %>% mutate(mentions1=mentions) %>%
+  select(-mentions_screen_name) %>%
+  mutate(mentions=mentions1) %>%
+  select(-mentions1)
+
+
+str(new.tweets)
+```
+
+Note that the "hashtags" and "mentions" fields are now string entries rather than lists. 
 
 ## Step 2: Set up/Update/Refresh the database
 
@@ -168,24 +216,131 @@ Assuming you have a database connection, pulling the tables containing the socia
 * send an SQL query
 * close the connection
 
-In the sample below, I have a table called "tweets_content" living in the PacFIN_Econ database on the Pinniger server.  
+In my PacFIN_Econ database on the Pinniger Server, I have a table called "tweets_content" and a table called "tweets_users". The "tweets_content" table holds all the actual tweets that I've pulled from Twitter and the "tweets_users" holds the meta information on each user present in the "tweets_content" table.  
+
+To get the existing data from my database tables I use the *odbcConnect()* function to set up communication between my R session and my database, then I use the *sqlQuery()* function to pass a SQL query in a character string.
+
+```{r, eval=FALSE}
+channel <- odbcConnect(dsn='pinniger', uid='',pwd='')
+content <- sqlQuery(channel,'select * from [PacFIN_Econ].[dbo].[tweets_content]')
+users.info <- sqlQuery(channel,'select * from [PacFIN_Econ].[dbo].[tweets_users]')
+close(channel)
+```
+
+Note that I'm not running the code above because I don't want to display my login credentials.  But I've exported these tables to csv files so I can show what they look like when read into R:
 
 ```{r}
-channel <- 
-tweets <- sqlQuery()
-close(channel)
+content <- read.csv('data/tweet_content.csv')
+users.info <- read.csv('data/tweet_users.csv')
+
+print.data.frame(content[1:5,])
+print.data.frame(users.info[1:5,])
 ```
 
 ### Step 2B: Update the tables
 
-The reason I pulled down the existing data in the step above is that the Twitter accounts that I'm tracking aren't super active.  This means that if I pull down say the 200 most recent tweets two weeks in a row for the same user I'm likely to generate a lot of duplicated data.  To avoid saving a bunch of duplicates to my database table I use the 4-step process of 
+The reason I pulled down the existing data in the step above is that the Twitter accounts that I'm tracking aren't super active.  This means that if I pull down say the 200 most recent tweets for two weeks in a row for the same user I'm likely to generate a lot of duplicated data.  To avoid saving a bunch of duplicates to my database table I use the 4-step process of 
 
-1. get the existing data from the database
-2. pull the new Twitter activity
+1. get the existing data from the database (done in Step 2A)
+2. pull the new Twitter activity (done in Step 1)
 3. join the new activity with the old stuff and remove duplicates
 4. save the joined dataframe in the database 
 
 
-```{r}
+At this point in the discussion we've got items 1 and 2 from the list above knocked out.  We just need to (i) join the new data with the old data and remove duplicates and (ii) send these joined/cleaned data back to the database
+
+
+Joining the new with the old and removing duplicates is relatively simple:
+
+```{r,eval=FALSE}
+
+content <- rbind(content,new.tweets)
+users.info <- rbind(users.info,new.user.info) 
+
+#get rid of any duplicates
+content <- content %>% group_by(user_id,screen_name,created_at,text) %>%
+           filter(row_number()==1)
+
+users.info <- users.info %>%
+              group_by(user_id,screen_name,updated) %>%
+              filter(row_number()==1)
+
+#save these as back up .csv file
+write.csv(content,'data/tweet_content.csv')
+write.csv(users.info,'data/tweet_users.csv')
 
 ```
+
+Sending the new tables up to the database is somewhat tricky but only because there are a lot of different ways to use RODBC to write to a database table.  At the moment I'm using the simplest way I could think of:
+
+1. drop the existing database tables
+2. save the new data frames as tables
+
+```{r,eval=FALSE}
+channel <- odbcConnect(dsn='pinniger', uid='',pwd='')
+sqlQuery(channel,'USE PacFIN_Econ')
+cols <- sqlColumns(channel,"tweets_content")
+colTypes <- as.character(cols$TYPE_NAME)
+colTypes[which(colTypes=='bit')] <- 'varchar(5)'
+colTypes[which(colTypes=='varchar')] <- 'varchar(255)'
+names(colTypes) <- as.character(cols$COLUMN_NAME)
+sqlQuery(channel,"drop table tweets_content")
+sqlSave(channel,content,tablename='tweets_content',append=T,rownames=F,varTypes=colTypes)
+close(channel)
+
+
+channel <- odbcConnect(dsn='pinniger', uid='',pwd='')
+sqlQuery(channel,'USE PacFIN_Econ')
+cols.users <- sqlColumns(channel,'tweets_users')
+colTypes <- as.character(cols.users$TYPE_NAME)
+colTypes[which(colTypes=='bit')] <- 'varchar(5)'
+colTypes[which(colTypes=='varchar')] <- 'varchar(500)'
+names(colTypes) <- as.character(cols.users$COLUMN_NAME)
+sqlQuery(channel,"drop table tweets_users")
+sqlSave(channel,users.info,tablename='tweets_users',append=T,rownames=F,varTypes=colTypes)
+close(channel)
+
+```
+
+I'm pretty aware of the fact that this is a solution that is not likely to age well.  As the project grows and continues to pull tweets and add them to the database the data frames are going to start getting really big.  With really big data frames I suspect that writing a new table to the database each time I refresh the data is going to take intolerably long.
+
+I'm pretty confident that there is some kind of *sqlUpdate()* or *sqlAddRows()* type method in RODBC that could update my database tables without completely wiping the old stuff and writing new tables...but I haven't had time to investigate this fully yet.
+
+## Step 3: Update the Shiny directory
+
+This step is pure personal preference and laziness.  Strictly speaking one could almost certainly use RODBC methods within Shiny to pull and display these data based on some user inputs.  I tried to do this but it was hard and slow, so I chose the following workflow:
+
+1. Pull the most current data from the database
+2. Save it to a .csv file in the Shiny Directory
+
+
+
+Pulling the most current data from the database is just another instance of the RODBC methods discussed in Step 2:
+
+```{r,eval=FALSE}
+channel <- odbcConnect(dsn='pinniger', uid='',pwd='')
+tweet_content <- sqlQuery(channel,'select * from [PacFIN_Econ].[dbo].[tweets_content]')
+tweet_users <- sqlQuery(channel,'select * from [PacFIN_Econ].[dbo].[tweets_users]')
+close(channel)
+
+#write these data frames to .csv files in my Shiny directory
+write.csv(tweet_content,file="shiny/tweet_content.csv")
+write.csv(tweet_users,file="shiny/tweet_users.csv")
+```
+
+Writing these data frames to the local Shiny directory is again totally option.  I do it because I'm deploying my Shiny app to the web using [shinyapps.io](https://www.shinyapps.io).  This means I need a single directory with (i) my Shiny code and (ii) all the data dependencies.
+
+
+## Step 4: Publish the Shiny App
+
+### Quick Review
+
+Here is what I have:
+
+Here is what I want:
+
+### The Shiny App
+
+
+### Publish the App
+
