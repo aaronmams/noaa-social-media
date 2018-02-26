@@ -68,23 +68,11 @@ screen_names <- c('NOAAHabitat','NOAAFisheries','NOAAFish_WCRO','NOAA','NOAARese
 
 
 # get tweets from each of our accounts
-tl <- get_timeline('@NOAAHabitat',n=200,retryonratelimit=TRUE)
-tl <- rbind(tl,get_timeline('@NOAAFisheries',n=200))
-tl <- rbind(tl,get_timeline('@NOAAFish_WCRO',n=200))
-tl <- rbind(tl,get_timeline('@NOAA',n=200))
-tl <- rbind(tl,get_timeline('@NOAAResearch',n=200))
-
-tl <- rbind(tl,get_timeline('@NOAANCEIclimate',n=200))
-tl <- rbind(tl,get_timeline('@NOAAClimate',n=200))
-tl <- rbind(tl,get_timeline('@MBNMS',n=200))
-tl <- rbind(tl,get_timeline('@Eileen_NOAAFish',n=200))
-tl <- rbind(tl,get_timeline('@NOAAFisheriesAK',n=200))
-tl <- rbind(tl,get_timeline('@NOAAFish_PIRO',n=200))
-tl <- rbind(tl,get_timeline('@NOAAFish_PIFSC',n=200))
-tl <- rbind(tl,get_timeline('@NOAAFish_SERO',n=200))
-tl <- rbind(tl,get_timeline('@CenterforBioDiv',n=200))
-
-
+tl <- lapply(users,function(x){
+          get_timeline(x,n=200,retryonratelimit=TRUE)
+)
+           
+tl <- data.frame(rbindlist(tl))
 tl <- tl %>% select(created_at,user_id,screen_name,text,
                     is_quote,is_retweet,favorite_count,
                     retweet_count,hashtags,mentions_screen_name) %>%
