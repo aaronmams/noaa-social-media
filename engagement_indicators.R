@@ -7,11 +7,36 @@ library(lubridate)
 library(ggthemes)
 library(tidyverse)
 
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+# This is a testing script.  Pretty inconsequential in the overall project
+# I've just been using it to test some filters and plots before I put
+# them in the Shiny App.
+
+
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+
 tweets <- read.csv('data/tweets.csv')
 user.info <- read.csv('data/users_info.csv')
 
-users <- c('@NOAAHabitat','@NOAAFisheries','@NOAAFish_WCRO','@NOAA','@NOAAResearch')
-NOAA_screen_names <- c('NOAAHabitat','NOAAFisheries','NOAAFish_WCRO','NOAA','NOAAResearch')
+users <- c('@NOAAHabitat','@NOAAFisheries','@NOAAFish_WCRO','@NOAA','@NOAAResearch','@NOAANCEIclimate',
+           '@NOAAClimate','@MBNMS','@NOAA_CINMS','@Eileen_NOAAFish','@NOAAFisheriesAK','@NOAAFish_PIRO',
+           '@NOAAFish_PIFSC','@NOAAFish_SERO','@CenterForBioDiv')
+
+screen_names <- c('NOAAHabitat','NOAAFisheries','NOAAFish_WCRO','NOAA','NOAAResearch','NOAANCEIclimate',
+                  'NOAAClimate','MBNMS','NOAA_CINMS','Eileen_NOAAFish','NOAAFisheriesAK','NOAAFish_PIRO',
+                  'NOAAFish_PIFSC','NOAAFish_SERO','CenterForBioDiv')
 
 #----------------------------------------------------------
 # most retweeted hashtags from NOAA accounts
@@ -231,21 +256,3 @@ u <- tbl_df(user.info) %>%
 ##############################################################################################
 ##############################################################################################
 
-
-
-
-
-
-
-
-#----------------------------------------------------------
-
-df <- structure(list(idnum = c(17L, 17L, 17L), start = structure(c(8401, 
-                                                                   8401, 8401), class = "Date"), end = structure(c(8765, 8765, 8765
-                                                                   ), class = "Date")), class = "data.frame", .Names = c("idnum", 
-                                                                                                                         "start", "end"), row.names = c(NA, -3L))
-
-df %>%
-  nest(start, end) %>%
-  mutate(df = map(df, ~seq(unique(.x$start), unique(.x$end), 1))) %>%
-  unnest(df)
