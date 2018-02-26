@@ -4,8 +4,9 @@ library(shiny)
 library(gridExtra)
 library(ggthemes)
 library(data.table)
+library(DT)
 
-#hashtags <- read.csv('hashtags.csv')
+
 tweets <- read.csv('tweet_content.csv')
 users <- read.csv('tweet_users.csv')
 
@@ -13,7 +14,6 @@ ui <- fluidPage(
   headerPanel('NOAA Social Media Engagement'),
   sidebarPanel(
     dateRangeInput('daterange','Date Range',start='2017-10-01',end='2018-02-16'),
-#    selectInput('metric', 'Top retweeted hashtags', c('retweets')),
     checkboxGroupInput('account','NOAA Account', choices=unique(users$screen_name[users$shinyacct==1]),selected=c('NOAAFish_WCRO'))
                         #  c('NOAAHabitat','NOAAFish_WCRO',
                         # 'NOAAFisheries','NOAAResearch'),
@@ -30,8 +30,10 @@ ui <- fluidPage(
       tabPanel("Top Users",
                plotOutput('plot3'),
                plotOutput('plot4')
-      ),
-      tabPanel("Top Tweets",tableOutput('table1'))
+      )
+      ,
+      tabPanel("Top Tweets", DT::dataTableOutput("table1"))
+
     )    
   )
 )
@@ -154,12 +156,14 @@ tweet_table <-  reactive({rt() %>%
   arrange(-RTs) %>%
   ungroup() %>%
   filter(row_number() <= 20)  %>%
-  select(screen_name,created_at,RTs,text)
+ select(screen_name,created_at,RTs,text)
 })
 
-  output$table1 <- renderTable(tweet_table()   
-  )
+
+    output$table1 <- DT::renderDataTable({tweet_table()   
+    })
   
+   
 }
 
 shinyApp(ui = ui, server = server)
