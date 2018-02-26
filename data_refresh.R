@@ -48,7 +48,7 @@ library(RODBC)
 
 #-------------------------------------------------------------------------
 # get the old stuff
-channel <- odbcConnect(dsn='pinniger', uid='aaron.mamula',pwd='aaron24')
+channel <- odbcConnect(dsn='pinniger', uid='',pwd='')
 content <- sqlQuery(channel,'select * from [PacFIN_Econ].[dbo].[tweets_content]')
 users.info <- sqlQuery(channel,'select * from [PacFIN_Econ].[dbo].[tweets_users]')
 close(channel)
@@ -114,19 +114,8 @@ tl <- tl %>% mutate(mentions1=mentions) %>%
 
 dummy.df <- search_tweets('#love',n=10)
 
-df <- lapply(users[1:5],function(x){
-  rt <- search_tweets(
-    x, n = 500, include_rts = FALSE
-  )
-  df <- rt %>% select(created_at,user_id,screen_name,text,
-                      is_quote,is_retweet,favorite_count,
-                      retweet_count,hashtags,mentions_screen_name) %>% 
-    mutate(update_time=Sys.time())
-  return(df)  
-})
 
-
-df2 <- lapply(users[6:10],function(x){
+df <- lapply(users,function(x){
   rt <- search_tweets(
     x, n = 500, include_rts = TRUE
   )
@@ -145,26 +134,7 @@ df2 <- lapply(users[6:10],function(x){
   return(df)  
 })
 
-df3 <- lapply(users[11:15],function(x){
-  rt <- search_tweets(
-    x, n = 500, include_rts = TRUE
-  )
-  
-  if(nrow(rt)==0){
-    df <- dummy.df %>%  select(created_at,user_id,screen_name,text,
-                               is_quote,is_retweet,favorite_count,
-                               retweet_count,hashtags,mentions_screen_name) %>% 
-      mutate(update_time=Sys.time()) 
-  }else{
-    df <- rt %>% select(created_at,user_id,screen_name,text,
-                        is_quote,is_retweet,favorite_count,
-                        retweet_count,hashtags,mentions_screen_name) %>% 
-      mutate(update_time=Sys.time())
-  }
-  return(df)  
-})
-
-df <- data.frame(rbind(rbindlist(df),rbindlist(df2),rbindlist(df3)))
+df <- data.frame(rbindlist(df))
 
 #fix hashtag list
 hash <- unlist(lapply(df$hashtags,function(x){paste(c(unlist(x)),collapse=";")}))
@@ -230,7 +200,7 @@ write.csv(users.info,'data/tweet_users.csv')
 
 # the database tables
 
-channel <- odbcConnect(dsn='pinniger', uid='aaron.mamula',pwd='aaron24')
+channel <- odbcConnect(dsn='pinniger', uid='',pwd='aaron24')
 sqlQuery(channel,'USE PacFIN_Econ')
 cols <- sqlColumns(channel,"tweets_content")
 colTypes <- as.character(cols$TYPE_NAME)
@@ -242,7 +212,7 @@ sqlSave(channel,content,tablename='tweets_content',append=T,rownames=F,varTypes=
 close(channel)
 
 
-channel <- odbcConnect(dsn='pinniger', uid='aaron.mamula',pwd='aaron24')
+channel <- odbcConnect(dsn='pinniger', uid='',pwd='')
 sqlQuery(channel,'USE PacFIN_Econ')
 cols.users <- sqlColumns(channel,'tweets_users')
 colTypes <- as.character(cols.users$TYPE_NAME)
