@@ -62,6 +62,11 @@ users <- c('@NOAAHabitat','@NOAAFisheries','@NOAAFish_WCRO','@NOAA','@NOAAResear
            '@NOAAClimate','@MBNMS','@NOAA_CINMS','@Eileen_NOAAFish','@NOAAFisheriesAK','@NOAAFish_PIRO',
            '@NOAAFish_PIFSC','@NOAAFish_SERO','@CenterForBioDiv')
 
+screen_names <- c('NOAAHabitat','NOAAFisheries','NOAAFish_WCRO','NOAA','NOAAResearch','NOAANCEIclimate',
+                  'NOAAClimate','MBNMS','NOAA_CINMS','Eileen_NOAAFish','NOAAFisheriesAK','NOAAFish_PIRO',
+                  'NOAAFish_PIFSC','NOAAFish_SERO','CenterForBioDiv')
+
+
 # get tweets from each of our accounts
 tl <- get_timeline('@NOAAHabitat',n=200,retryonratelimit=TRUE)
 tl <- rbind(tl,get_timeline('@NOAAFisheries',n=200))
