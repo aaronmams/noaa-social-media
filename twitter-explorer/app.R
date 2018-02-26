@@ -145,16 +145,19 @@ server <- function(input, output) {
       facet_wrap(~screen_name,scales='free') + 
       theme_wsj() +  theme(legend.text=element_text(size=12)) + ggtitle('Followers')
   })
-  
-  output$table1 <- renderTable(  rt() %>%
-                                   filter(is_retweet==FALSE) %>%
-                                   filter(is.na(hashtags)==FALSE) %>%
-                                   group_by(screen_name,created_at,text,hashtags,mentions) %>%
-                                   summarise(RTs=sum(retweet_count,na.rm=T)) %>%
-                                   arrange(-RTs) %>%
-                                   ungroup() %>%
-                                   filter(row_number() <= 20)  %>%
-                                   select(screen_name,created_at,RTs,text) 
+
+tweet_table <-  reactive({rt() %>%
+  filter(is_retweet==FALSE) %>%
+  filter(is.na(hashtags)==FALSE) %>%
+  group_by(screen_name,created_at,text,hashtags,mentions) %>%
+  summarise(RTs=sum(retweet_count,na.rm=T)) %>%
+  arrange(-RTs) %>%
+  ungroup() %>%
+  filter(row_number() <= 20)  %>%
+  select(screen_name,created_at,RTs,text)
+})
+
+  output$table1 <- renderTable(tweet_table()   
   )
   
 }
