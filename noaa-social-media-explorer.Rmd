@@ -23,7 +23,7 @@ The project follows a multi-step process to display information about NOAA-relat
 
 ### Step 0: Set up a database
 
-For this project I set up two tables inside a database called ECON on our lab's Pinniger server. This initial set up was done entirely with MS SQL Server Management Studio, involved no R-ing, was really simple, and further discussion is likely of no interest to anyone in the group.  Moving on.
+For this project I set up two tables inside a database on my SQL Server. This initial set up was done entirely with MS SQL Server Management Studio, involved no R-ing, was really simple, and further discussion is likely of no interest to anyone in the group.  Moving on.
 
 ### Step 1: Collect and organize Twitter activity from NOAA accounts
 
@@ -31,11 +31,11 @@ This step uses the [rtweet](http://rtweet.info/) package to manage calls to Twit
 
 ### Step 2: Push the Twitter data up to the database
 
-This step uses the [RODBC Package](https://cran.r-project.org/web/packages/RODBC/index.html) to connect to my databases on Pinniger and add Twitter data to existing tables. 
+This step uses the [RODBC Package](https://cran.r-project.org/web/packages/RODBC/index.html) to connect to my databases and add Twitter data to existing tables. 
 
 ### Step 3: Save the updated Twitter data to local .csv files
 
-This step is clunky and probably unnecessary in the long run...but for now I don't really want my Shiny app connecting to SQL Server databases on Pinniger so I'm saving the data locally as well as in database tables.
+This step is clunky and probably unnecessary in the long run...but for now I don't really want my Shiny app connecting to SQL Server databases so I'm saving the data locally as well as in database tables.
 
 ### Step 4: Create an R Shiny App to display the data
 
@@ -216,14 +216,14 @@ Assuming you have a database connection, pulling the tables containing the socia
 * send an SQL query
 * close the connection
 
-In my PacFIN_Econ database on the Pinniger Server, I have a table called "tweets_content" and a table called "tweets_users". The "tweets_content" table holds all the actual tweets that I've pulled from Twitter and the "tweets_users" holds the meta information on each user present in the "tweets_content" table.  
+In my database, I have a table called "tweets_content" and a table called "tweets_users". The "tweets_content" table holds all the actual tweets that I've pulled from Twitter and the "tweets_users" holds the meta information on each user present in the "tweets_content" table.  
 
 To get the existing data from my database tables I use the *odbcConnect()* function to set up communication between my R session and my database, then I use the *sqlQuery()* function to pass a SQL query in a character string.
 
 ```{r, eval=FALSE}
-channel <- odbcConnect(dsn='pinniger', uid='',pwd='')
-content <- sqlQuery(channel,'select * from [PacFIN_Econ].[dbo].[tweets_content]')
-users.info <- sqlQuery(channel,'select * from [PacFIN_Econ].[dbo].[tweets_users]')
+channel <- odbcConnect(dsn='', uid='',pwd='')
+content <- sqlQuery(channel,'select * from [].[dbo].[tweets_content]')
+users.info <- sqlQuery(channel,'select * from [].[dbo].[tweets_users]')
 close(channel)
 ```
 
@@ -277,8 +277,8 @@ Sending the new tables up to the database is somewhat tricky but only because th
 2. save the new data frames as tables
 
 ```{r,eval=FALSE}
-channel <- odbcConnect(dsn='pinniger', uid='',pwd='')
-sqlQuery(channel,'USE PacFIN_Econ')
+channel <- odbcConnect(dsn='', uid='',pwd='')
+sqlQuery(channel,'USE mydatabase')
 cols <- sqlColumns(channel,"tweets_content")
 colTypes <- as.character(cols$TYPE_NAME)
 colTypes[which(colTypes=='bit')] <- 'varchar(5)'
@@ -289,8 +289,8 @@ sqlSave(channel,content,tablename='tweets_content',append=T,rownames=F,varTypes=
 close(channel)
 
 
-channel <- odbcConnect(dsn='pinniger', uid='',pwd='')
-sqlQuery(channel,'USE PacFIN_Econ')
+channel <- odbcConnect(dsn='', uid='',pwd='')
+sqlQuery(channel,'USE mydatabase')
 cols.users <- sqlColumns(channel,'tweets_users')
 colTypes <- as.character(cols.users$TYPE_NAME)
 colTypes[which(colTypes=='bit')] <- 'varchar(5)'
@@ -318,9 +318,9 @@ This step is pure personal preference and laziness.  Strictly speaking one could
 Pulling the most current data from the database is just another instance of the RODBC methods discussed in Step 2:
 
 ```{r,eval=FALSE}
-channel <- odbcConnect(dsn='pinniger', uid='',pwd='')
-tweet_content <- sqlQuery(channel,'select * from [PacFIN_Econ].[dbo].[tweets_content]')
-tweet_users <- sqlQuery(channel,'select * from [PacFIN_Econ].[dbo].[tweets_users]')
+channel <- odbcConnect(dsn='', uid='',pwd='')
+tweet_content <- sqlQuery(channel,'select * from [].[dbo].[tweets_content]')
+tweet_users <- sqlQuery(channel,'select * from [].[dbo].[tweets_users]')
 close(channel)
 
 #write these data frames to .csv files in my Shiny directory
